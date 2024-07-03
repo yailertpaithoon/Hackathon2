@@ -1,0 +1,2578 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "e0a5bc5a-0df7-4d42-9c1c-415776372e3e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import sklearn as sk\n",
+    "import xgboost as xgb"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "daf9a0c2-c243-4222-9a18-6769d53861a3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.metrics import balanced_accuracy_score\n",
+    "from sklearn.model_selection import GridSearchCV\n",
+    "from sklearn.metrics import confusion_matrix\n",
+    "from sklearn.metrics import ConfusionMatrixDisplay\n",
+    "from sklearn.metrics import roc_auc_score\n",
+    "#from xgboost import early_stopping"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "57cf0cc1-fb81-4c05-a2db-fd3fab138b42",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv('farmer_data_set.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "1c652c5f-414a-4d9d-8ebb-7d432edd9bb0",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Unnamed: 0</th>\n",
+       "      <th>id</th>\n",
+       "      <th>id_number</th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>education</th>\n",
+       "      <th>status</th>\n",
+       "      <th>start years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>crops</th>\n",
+       "      <th>...</th>\n",
+       "      <th>loan_status</th>\n",
+       "      <th>saving/year</th>\n",
+       "      <th>addr_subdist</th>\n",
+       "      <th>addr_district</th>\n",
+       "      <th>addr_province</th>\n",
+       "      <th>zip_code</th>\n",
+       "      <th>climate</th>\n",
+       "      <th>credit_score</th>\n",
+       "      <th>credit_utilization</th>\n",
+       "      <th>credit_inquiry</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>1</td>\n",
+       "      <td>7.100000e+12</td>\n",
+       "      <td>937</td>\n",
+       "      <td>59</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>sugar cane</td>\n",
+       "      <td>...</td>\n",
+       "      <td>Fully Paid</td>\n",
+       "      <td>132,700.00</td>\n",
+       "      <td>??????????????</td>\n",
+       "      <td>??????????????</td>\n",
+       "      <td>?????????</td>\n",
+       "      <td>71260</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>2</td>\n",
+       "      <td>7.100000e+12</td>\n",
+       "      <td>195</td>\n",
+       "      <td>34</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary School</td>\n",
+       "      <td>Never Married</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>sugar cane</td>\n",
+       "      <td>...</td>\n",
+       "      <td>Charged Off</td>\n",
+       "      <td>127,800.00</td>\n",
+       "      <td>???????</td>\n",
+       "      <td>???????</td>\n",
+       "      <td>?????????</td>\n",
+       "      <td>71210</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>3</td>\n",
+       "      <td>7.100000e+12</td>\n",
+       "      <td>187</td>\n",
+       "      <td>61</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary School</td>\n",
+       "      <td>Divorced</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>...</td>\n",
+       "      <td>Fully Paid</td>\n",
+       "      <td>133,700.00</td>\n",
+       "      <td>???????</td>\n",
+       "      <td>???????</td>\n",
+       "      <td>?????????</td>\n",
+       "      <td>71110</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>4</td>\n",
+       "      <td>4.600000e+12</td>\n",
+       "      <td>628</td>\n",
+       "      <td>46</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>...</td>\n",
+       "      <td>Fully Paid</td>\n",
+       "      <td>56,700.00</td>\n",
+       "      <td>??????</td>\n",
+       "      <td>???????????</td>\n",
+       "      <td>?????????</td>\n",
+       "      <td>46110</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>5</td>\n",
+       "      <td>4.600000e+12</td>\n",
+       "      <td>1140</td>\n",
+       "      <td>65</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary School</td>\n",
+       "      <td>Separated</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>...</td>\n",
+       "      <td>Current</td>\n",
+       "      <td>54,200.00</td>\n",
+       "      <td>??????????????</td>\n",
+       "      <td>?????</td>\n",
+       "      <td>?????????</td>\n",
+       "      <td>46160</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>NaN</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>5 rows × 32 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   Unnamed: 0            id  id_number  age gender         education  \\\n",
+       "0           1  7.100000e+12        937   59   Male    Primary School   \n",
+       "1           2  7.100000e+12        195   34   Male  Secondary School   \n",
+       "2           3  7.100000e+12        187   61   Male  Secondary School   \n",
+       "3           4  4.600000e+12        628   46   Male    Primary School   \n",
+       "4           5  4.600000e+12       1140   65   Male  Secondary School   \n",
+       "\n",
+       "          status  start years  year_experience       crops  ...  loan_status  \\\n",
+       "0        Married           30               29  sugar cane  ...   Fully Paid   \n",
+       "1  Never Married           24               10  sugar cane  ...  Charged Off   \n",
+       "2       Divorced           23               38        rice  ...   Fully Paid   \n",
+       "3        Married           29               17        rice  ...   Fully Paid   \n",
+       "4      Separated           21               44        rice  ...      Current   \n",
+       "\n",
+       "   saving/year    addr_subdist   addr_district  addr_province  zip_code  \\\n",
+       "0   132,700.00  ??????????????  ??????????????      ?????????     71260   \n",
+       "1   127,800.00         ???????         ???????      ?????????     71210   \n",
+       "2   133,700.00         ???????         ???????      ?????????     71110   \n",
+       "3    56,700.00          ??????     ???????????      ?????????     46110   \n",
+       "4    54,200.00  ??????????????           ?????      ?????????     46160   \n",
+       "\n",
+       "  climate credit_score credit_utilization credit_inquiry  \n",
+       "0     NaN          NaN                NaN            NaN  \n",
+       "1     NaN          NaN                NaN            NaN  \n",
+       "2     NaN          NaN                NaN            NaN  \n",
+       "3     NaN          NaN                NaN            NaN  \n",
+       "4     NaN          NaN                NaN            NaN  \n",
+       "\n",
+       "[5 rows x 32 columns]"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e0bb7ee2-1a92-40e4-afdd-50755c0c8260",
+   "metadata": {},
+   "source": [
+    "### Dropping columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "9529878a-2185-4eb0-9018-af6cacf9b284",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.drop(['Unnamed: 0', 'id', 'id_number', 'addr_subdist', 'Ngan', 'wa2', 'addr_district', 'addr_province', 'climate', 'credit_score', 'credit_utilization', 'credit_inquiry', 'irregation'], axis = 1, inplace = True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "4d6589fd-e2df-423e-914c-2f674df0f4ef",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>education</th>\n",
+       "      <th>status</th>\n",
+       "      <th>start years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>crops</th>\n",
+       "      <th>farm_size_rai</th>\n",
+       "      <th>soil_quality</th>\n",
+       "      <th>yield (kg/rai)</th>\n",
+       "      <th>yield (ton)</th>\n",
+       "      <th>mkt_price (THB/ton)</th>\n",
+       "      <th>annual_income</th>\n",
+       "      <th>cost_ton</th>\n",
+       "      <th>annual_expense</th>\n",
+       "      <th>existing_loan</th>\n",
+       "      <th>loan_status</th>\n",
+       "      <th>saving/year</th>\n",
+       "      <th>zip_code</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>59</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>sugar cane</td>\n",
+       "      <td>30</td>\n",
+       "      <td>N</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>332.07</td>\n",
+       "      <td>1,165.82</td>\n",
+       "      <td>387,129.68</td>\n",
+       "      <td>1,122.00</td>\n",
+       "      <td>372,578.53</td>\n",
+       "      <td>62,500.00</td>\n",
+       "      <td>Fully Paid</td>\n",
+       "      <td>132,700.00</td>\n",
+       "      <td>71260</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>34</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary School</td>\n",
+       "      <td>Never Married</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>sugar cane</td>\n",
+       "      <td>48</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>523.38</td>\n",
+       "      <td>1,165.82</td>\n",
+       "      <td>610,169.59</td>\n",
+       "      <td>1,122.00</td>\n",
+       "      <td>587,234.98</td>\n",
+       "      <td>180,400.00</td>\n",
+       "      <td>Charged Off</td>\n",
+       "      <td>127,800.00</td>\n",
+       "      <td>71210</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>61</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary School</td>\n",
+       "      <td>Divorced</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>105</td>\n",
+       "      <td>N</td>\n",
+       "      <td>604.49</td>\n",
+       "      <td>63.77</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>682,439.69</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>569,685.99</td>\n",
+       "      <td>155,700.00</td>\n",
+       "      <td>Fully Paid</td>\n",
+       "      <td>133,700.00</td>\n",
+       "      <td>71110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>46</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>64</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>24.16</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>258,573.28</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>215,851.42</td>\n",
+       "      <td>81,800.00</td>\n",
+       "      <td>Fully Paid</td>\n",
+       "      <td>56,700.00</td>\n",
+       "      <td>46110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>65</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary School</td>\n",
+       "      <td>Separated</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>81</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>30.36</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>324,876.85</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>271,200.21</td>\n",
+       "      <td>108,600.00</td>\n",
+       "      <td>Current</td>\n",
+       "      <td>54,200.00</td>\n",
+       "      <td>46160</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   age gender         education         status  start years  year_experience  \\\n",
+       "0   59   Male    Primary School        Married           30               29   \n",
+       "1   34   Male  Secondary School  Never Married           24               10   \n",
+       "2   61   Male  Secondary School       Divorced           23               38   \n",
+       "3   46   Male    Primary School        Married           29               17   \n",
+       "4   65   Male  Secondary School      Separated           21               44   \n",
+       "\n",
+       "        crops  farm_size_rai soil_quality  yield (kg/rai)  yield (ton)  \\\n",
+       "0  sugar cane             30            N        10730.00       332.07   \n",
+       "1  sugar cane             48           S3        10730.00       523.38   \n",
+       "2        rice            105            N          604.49        63.77   \n",
+       "3        rice             64           S3          372.54        24.16   \n",
+       "4        rice             81           S3          372.54        30.36   \n",
+       "\n",
+       "  mkt_price (THB/ton) annual_income  cost_ton annual_expense existing_loan  \\\n",
+       "0            1,165.82    387,129.68  1,122.00     372,578.53     62,500.00   \n",
+       "1            1,165.82    610,169.59  1,122.00     587,234.98    180,400.00   \n",
+       "2           10,702.24    682,439.69  8,934.00     569,685.99    155,700.00   \n",
+       "3           10,702.24    258,573.28  8,934.00     215,851.42     81,800.00   \n",
+       "4           10,702.24    324,876.85  8,934.00     271,200.21    108,600.00   \n",
+       "\n",
+       "   loan_status saving/year  zip_code  \n",
+       "0   Fully Paid  132,700.00     71260  \n",
+       "1  Charged Off  127,800.00     71210  \n",
+       "2   Fully Paid  133,700.00     71110  \n",
+       "3   Fully Paid   56,700.00     46110  \n",
+       "4      Current   54,200.00     46160  "
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b3958757-c671-415b-8bbf-04ffa4846e7f",
+   "metadata": {},
+   "source": [
+    "### Checking for unique value"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "f31999ff-9949-4bf8-936b-ab0b5392f05d",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['Primary School', 'Secondary School', 'Bachelor Degree',\n",
+       "       'Master Degree'], dtype=object)"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['education'].unique()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "58be39e4-a642-48d6-bafe-ff58f98b6eb8",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['Married', 'Never Married', 'Divorced', 'Separated'], dtype=object)"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['status'].unique()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "69b39fe5-9993-45a3-9945-9c7afedd12d0",
+   "metadata": {},
+   "source": [
+    "### Fill blank space with '_'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "0a929126-e475-465a-9396-521236329c5f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.replace(' ', '_', regex = True, inplace = True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "b13e31aa-ca2d-4143-8e13-ceb0b0dd6dd6",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>education</th>\n",
+       "      <th>status</th>\n",
+       "      <th>start years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>crops</th>\n",
+       "      <th>farm_size_rai</th>\n",
+       "      <th>soil_quality</th>\n",
+       "      <th>yield (kg/rai)</th>\n",
+       "      <th>yield (ton)</th>\n",
+       "      <th>mkt_price (THB/ton)</th>\n",
+       "      <th>annual_income</th>\n",
+       "      <th>cost_ton</th>\n",
+       "      <th>annual_expense</th>\n",
+       "      <th>existing_loan</th>\n",
+       "      <th>loan_status</th>\n",
+       "      <th>saving/year</th>\n",
+       "      <th>zip_code</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>59</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>30</td>\n",
+       "      <td>N</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>332.07</td>\n",
+       "      <td>1,165.82</td>\n",
+       "      <td>387,129.68</td>\n",
+       "      <td>1,122.00</td>\n",
+       "      <td>372,578.53</td>\n",
+       "      <td>62,500.00</td>\n",
+       "      <td>Fully_Paid</td>\n",
+       "      <td>132,700.00</td>\n",
+       "      <td>71260</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>34</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Never_Married</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>48</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>523.38</td>\n",
+       "      <td>1,165.82</td>\n",
+       "      <td>610,169.59</td>\n",
+       "      <td>1,122.00</td>\n",
+       "      <td>587,234.98</td>\n",
+       "      <td>180,400.00</td>\n",
+       "      <td>Charged_Off</td>\n",
+       "      <td>127,800.00</td>\n",
+       "      <td>71210</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>61</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Divorced</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>105</td>\n",
+       "      <td>N</td>\n",
+       "      <td>604.49</td>\n",
+       "      <td>63.77</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>682,439.69</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>569,685.99</td>\n",
+       "      <td>155,700.00</td>\n",
+       "      <td>Fully_Paid</td>\n",
+       "      <td>133,700.00</td>\n",
+       "      <td>71110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>46</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>64</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>24.16</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>258,573.28</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>215,851.42</td>\n",
+       "      <td>81,800.00</td>\n",
+       "      <td>Fully_Paid</td>\n",
+       "      <td>56,700.00</td>\n",
+       "      <td>46110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>65</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Separated</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>81</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>30.36</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>324,876.85</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>271,200.21</td>\n",
+       "      <td>108,600.00</td>\n",
+       "      <td>Current</td>\n",
+       "      <td>54,200.00</td>\n",
+       "      <td>46160</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   age gender         education         status  start years  year_experience  \\\n",
+       "0   59   Male    Primary_School        Married           30               29   \n",
+       "1   34   Male  Secondary_School  Never_Married           24               10   \n",
+       "2   61   Male  Secondary_School       Divorced           23               38   \n",
+       "3   46   Male    Primary_School        Married           29               17   \n",
+       "4   65   Male  Secondary_School      Separated           21               44   \n",
+       "\n",
+       "        crops  farm_size_rai soil_quality  yield (kg/rai)  yield (ton)  \\\n",
+       "0  sugar_cane             30            N        10730.00       332.07   \n",
+       "1  sugar_cane             48           S3        10730.00       523.38   \n",
+       "2        rice            105            N          604.49        63.77   \n",
+       "3        rice             64           S3          372.54        24.16   \n",
+       "4        rice             81           S3          372.54        30.36   \n",
+       "\n",
+       "  mkt_price (THB/ton) annual_income  cost_ton annual_expense existing_loan  \\\n",
+       "0            1,165.82    387,129.68  1,122.00     372,578.53     62,500.00   \n",
+       "1            1,165.82    610,169.59  1,122.00     587,234.98    180,400.00   \n",
+       "2           10,702.24    682,439.69  8,934.00     569,685.99    155,700.00   \n",
+       "3           10,702.24    258,573.28  8,934.00     215,851.42     81,800.00   \n",
+       "4           10,702.24    324,876.85  8,934.00     271,200.21    108,600.00   \n",
+       "\n",
+       "   loan_status saving/year  zip_code  \n",
+       "0   Fully_Paid  132,700.00     71260  \n",
+       "1  Charged_Off  127,800.00     71210  \n",
+       "2   Fully_Paid  133,700.00     71110  \n",
+       "3   Fully_Paid   56,700.00     46110  \n",
+       "4      Current   54,200.00     46160  "
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "f9f3e715-e167-4837-946f-461bfb908e4e",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.columns = df.columns.str.replace(' ', '_')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "cb54bbb0-2ff2-4535-b4d2-9176a7cdd49f",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>education</th>\n",
+       "      <th>status</th>\n",
+       "      <th>start_years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>crops</th>\n",
+       "      <th>farm_size_rai</th>\n",
+       "      <th>soil_quality</th>\n",
+       "      <th>yield_(kg/rai)</th>\n",
+       "      <th>yield_(ton)</th>\n",
+       "      <th>mkt_price_(THB/ton)</th>\n",
+       "      <th>annual_income</th>\n",
+       "      <th>cost_ton</th>\n",
+       "      <th>annual_expense</th>\n",
+       "      <th>existing_loan</th>\n",
+       "      <th>loan_status</th>\n",
+       "      <th>saving/year</th>\n",
+       "      <th>zip_code</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>59</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>30</td>\n",
+       "      <td>N</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>332.07</td>\n",
+       "      <td>1,165.82</td>\n",
+       "      <td>387,129.68</td>\n",
+       "      <td>1,122.00</td>\n",
+       "      <td>372,578.53</td>\n",
+       "      <td>62,500.00</td>\n",
+       "      <td>Fully_Paid</td>\n",
+       "      <td>132,700.00</td>\n",
+       "      <td>71260</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>34</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Never_Married</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>48</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>523.38</td>\n",
+       "      <td>1,165.82</td>\n",
+       "      <td>610,169.59</td>\n",
+       "      <td>1,122.00</td>\n",
+       "      <td>587,234.98</td>\n",
+       "      <td>180,400.00</td>\n",
+       "      <td>Charged_Off</td>\n",
+       "      <td>127,800.00</td>\n",
+       "      <td>71210</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>61</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Divorced</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>105</td>\n",
+       "      <td>N</td>\n",
+       "      <td>604.49</td>\n",
+       "      <td>63.77</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>682,439.69</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>569,685.99</td>\n",
+       "      <td>155,700.00</td>\n",
+       "      <td>Fully_Paid</td>\n",
+       "      <td>133,700.00</td>\n",
+       "      <td>71110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>46</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>64</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>24.16</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>258,573.28</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>215,851.42</td>\n",
+       "      <td>81,800.00</td>\n",
+       "      <td>Fully_Paid</td>\n",
+       "      <td>56,700.00</td>\n",
+       "      <td>46110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>65</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Separated</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>81</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>30.36</td>\n",
+       "      <td>10,702.24</td>\n",
+       "      <td>324,876.85</td>\n",
+       "      <td>8,934.00</td>\n",
+       "      <td>271,200.21</td>\n",
+       "      <td>108,600.00</td>\n",
+       "      <td>Current</td>\n",
+       "      <td>54,200.00</td>\n",
+       "      <td>46160</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   age gender         education         status  start_years  year_experience  \\\n",
+       "0   59   Male    Primary_School        Married           30               29   \n",
+       "1   34   Male  Secondary_School  Never_Married           24               10   \n",
+       "2   61   Male  Secondary_School       Divorced           23               38   \n",
+       "3   46   Male    Primary_School        Married           29               17   \n",
+       "4   65   Male  Secondary_School      Separated           21               44   \n",
+       "\n",
+       "        crops  farm_size_rai soil_quality  yield_(kg/rai)  yield_(ton)  \\\n",
+       "0  sugar_cane             30            N        10730.00       332.07   \n",
+       "1  sugar_cane             48           S3        10730.00       523.38   \n",
+       "2        rice            105            N          604.49        63.77   \n",
+       "3        rice             64           S3          372.54        24.16   \n",
+       "4        rice             81           S3          372.54        30.36   \n",
+       "\n",
+       "  mkt_price_(THB/ton) annual_income  cost_ton annual_expense existing_loan  \\\n",
+       "0            1,165.82    387,129.68  1,122.00     372,578.53     62,500.00   \n",
+       "1            1,165.82    610,169.59  1,122.00     587,234.98    180,400.00   \n",
+       "2           10,702.24    682,439.69  8,934.00     569,685.99    155,700.00   \n",
+       "3           10,702.24    258,573.28  8,934.00     215,851.42     81,800.00   \n",
+       "4           10,702.24    324,876.85  8,934.00     271,200.21    108,600.00   \n",
+       "\n",
+       "   loan_status saving/year  zip_code  \n",
+       "0   Fully_Paid  132,700.00     71260  \n",
+       "1  Charged_Off  127,800.00     71210  \n",
+       "2   Fully_Paid  133,700.00     71110  \n",
+       "3   Fully_Paid   56,700.00     46110  \n",
+       "4      Current   54,200.00     46160  "
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2d11bac7-494b-498f-acb2-f352206cb04b",
+   "metadata": {},
+   "source": [
+    "### Missing Data"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "06dcc656-6681-49e2-9175-b584e158cd5c",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "age                      int64\n",
+       "gender                  object\n",
+       "education               object\n",
+       "status                  object\n",
+       "start_years              int64\n",
+       "year_experience          int64\n",
+       "crops                   object\n",
+       "farm_size_rai            int64\n",
+       "soil_quality            object\n",
+       "yield_(kg/rai)         float64\n",
+       "yield_(ton)            float64\n",
+       "mkt_price_(THB/ton)     object\n",
+       "annual_income           object\n",
+       "cost_ton                object\n",
+       "annual_expense          object\n",
+       "existing_loan           object\n",
+       "loan_status             object\n",
+       "saving/year             object\n",
+       "zip_code                 int64\n",
+       "dtype: object"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.dtypes"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "1843e5d8-ef1b-4431-9c32-6d5076950668",
+   "metadata": {},
+   "source": [
+    "#### mkt_price_(THB/ton)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "f95b9661-f403-4daf-bf51-58a652742cb4",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['mkt_price_(THB/ton)'] = df['mkt_price_(THB/ton)'].str.replace(',', '')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "f026c6b0-bce0-441e-810f-7ecac568723b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['mkt_price_(THB/ton)'] = pd.to_numeric(df['mkt_price_(THB/ton)'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "58e7c4fa-4f51-47c2-afa7-c9d96a896585",
+   "metadata": {},
+   "source": [
+    "#### annual_income"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "e3cd8ae6-dc64-4693-807e-d3ea7de2a774",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['annual_income'] = df['annual_income'].str.replace(',', '')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "62d40e05-d33a-4a83-9df4-e687b5e8236d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['annual_income'] = pd.to_numeric(df['annual_income'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "23a7a33a-bdc5-433d-b3ab-041b6709f176",
+   "metadata": {},
+   "source": [
+    "#### Cost_ton"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "28f262cd-0df7-4157-9454-53b790ce792d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['cost_ton'] = df['cost_ton'].str.replace(',', '')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "22d5ae46-912b-43b9-a8d8-7fca397214ff",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['cost_ton'] = pd.to_numeric(df['cost_ton'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "16578622-6045-468f-93e2-e369318974f5",
+   "metadata": {},
+   "source": [
+    "#### annuannual_expense"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "db03c68d-9ccc-4819-9d5d-943de1cae117",
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['372,578.53', '587,234.98', '569,685.99', '215,851.42',\n",
+       "       '271,200.21', '137,336.92', '378,272.51', '110,773.13',\n",
+       "       '276,539.38', '76,885.20', '100,778.86', '468,940.68',\n",
+       "       '792,250.85', '393,179.98', '365,595.69', '1,302,372.94',\n",
+       "       '752,141.68', '145,709.82', '93,181.90', '277,430.96',\n",
+       "       '221,485.74', '307,035.78', '232,425.02', '743,282.59', nan,\n",
+       "       '232,092.79', '251,241.32', '95,682.65', '116,217.00',\n",
+       "       '1,932,909.82', '1,378,212.67', '156,625.06', '413,025.88',\n",
+       "       '126,963.40', '159,494.51', '492,443.89', '1,138,266.03',\n",
+       "       '1,396,247.98', '145,612.82', '165,290.46', '276,532.47',\n",
+       "       '991,402.25', '513,410.26', '342,029.79', '489,319.14',\n",
+       "       '813,831.10', '311,487.97', '413,321.60', '807,195.89',\n",
+       "       '1,972,171.19', '1,415,999.08', '1,164,414.24', '590,343.45',\n",
+       "       '553,359.21', '530,116.52', '450,619.52', '319,183.72',\n",
+       "       '150,320.90', '174,041.74', '202,119.82', '369,951.93',\n",
+       "       '216,725.97', '297,050.70', '155,789.04', '1,499,362.63',\n",
+       "       '245,525.81', '203,788.01', '305,578.55', '212,587.09',\n",
+       "       '118,014.17', '116,069.81', '280,608.48', '253,595.78',\n",
+       "       '358,471.27', '470,558.97', '564,407.34', '328,880.46',\n",
+       "       '143,140.72', '180,398.83', '253,505.67', '105,704.99',\n",
+       "       '185,339.63', '172,923.17', '199,625.00', '220,942.33',\n",
+       "       '1,471,232.58', '323,415.95', '493,927.50', '815,782.72',\n",
+       "       '702,003.73', '336,911.16', '346,394.10', '366,019.34',\n",
+       "       '192,398.29', '142,440.51', '183,599.31'], dtype=object)"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['annual_expense'].unique()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "id": "3b2548da-337a-4b23-aa30-113e7af650e2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['annual_expense'] = df['annual_expense'].str.replace(',', '')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "cb01148a-cb8e-400c-ae27-dc03083a3473",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['annual_expense'] = pd.to_numeric(df['annual_expense'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6346e5be-8782-4590-8f5f-654b51960f42",
+   "metadata": {},
+   "source": [
+    "#### Existing_loan"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "id": "bef373d0-0d59-4666-b21c-b67910decc5c",
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['62,500.00', '180,400.00', '155,700.00', '81,800.00', '108,600.00',\n",
+       "       '68,800.00', '101,200.00', '66,300.00', '43,000.00', '38,800.00',\n",
+       "       '42,300.00', '284,800.00', '252,300.00', '194,700.00',\n",
+       "       '190,400.00', '198,000.00', '172,900.00', '76,500.00', '69,100.00',\n",
+       "       '163,500.00', '153,300.00', '66,200.00', '70,100.00', '12,000.00',\n",
+       "       '118,300.00', '108,100.00', '112,200.00', '179,700.00',\n",
+       "       '110,100.00', '69,700.00', '394,700.00', '460,800.00', '94,400.00',\n",
+       "       '100,600.00', '53,200.00', '60,000.00', '144,100.00', '87,400.00',\n",
+       "       '152,400.00', '78,100.00', '65,700.00', '122,400.00', '200,900.00',\n",
+       "       '30,800.00', '69,900.00', '67,200.00', '166,600.00', '73,300.00',\n",
+       "       '50,500.00', '124,700.00', '422,800.00', '106,300.00', '37,200.00',\n",
+       "       '198,400.00', '196,100.00', '21,600.00', '122,300.00', '58,100.00',\n",
+       "       '129,000.00', '72,800.00', '71,900.00', '84,900.00', '162,000.00',\n",
+       "       '96,000.00', '193,300.00', '148,500.00', '360,800.00', '41,800.00',\n",
+       "       '84,500.00', '127,900.00', '154,800.00', '37,000.00', '68,200.00',\n",
+       "       '161,700.00', '215,000.00', '284,100.00', '149,300.00',\n",
+       "       '65,900.00', '150,300.00', '190,100.00', '84,200.00', '92,600.00',\n",
+       "       '126,000.00', '125,400.00', '146,700.00', '361,600.00',\n",
+       "       '169,900.00', '160,600.00', '150,400.00', '205,300.00',\n",
+       "       '41,200.00', '63,000.00', '92,800.00', '128,500.00', '54,500.00',\n",
+       "       '46,200.00'], dtype=object)"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['existing_loan'].unique()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "id": "9804f5c2-2d03-4501-b844-87c423ce061d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['existing_loan'] = df['existing_loan'].str.replace(',', '')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "id": "41905056-54f6-42aa-8d6b-fc07ced91b62",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['existing_loan'] = pd.to_numeric(df['existing_loan'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bec7662e-d95a-4e3b-8fd0-13cdb9827cce",
+   "metadata": {},
+   "source": [
+    "#### saving/year"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "id": "ddf47f95-e971-499e-9da1-d83096dc914c",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['132,700.00', '127,800.00', '133,700.00', '56,700.00', '54,200.00',\n",
+       "       '48,300.00', '47,600.00', '43,600.00', '54,900.00', '49,200.00',\n",
+       "       '49,300.00', '130,100.00', '130,300.00', '128,300.00',\n",
+       "       '134,300.00', '135,800.00', '44,500.00', '52,000.00', '97,300.00',\n",
+       "       '37,500.00', '37,300.00', '47,300.00', '43,500.00', '48,900.00',\n",
+       "       '49,900.00', '41,500.00', '51,400.00', '53,900.00', '51,600.00',\n",
+       "       '54,600.00', '55,500.00', '53,300.00', '49,400.00', '146,300.00',\n",
+       "       '42,900.00', '36,500.00', '38,900.00', '50,700.00', '57,500.00',\n",
+       "       '47,100.00', '132,300.00', '43,300.00', '44,400.00', '51,300.00',\n",
+       "       '50,600.00', '136,000.00', '45,900.00', '46,800.00', '47,700.00',\n",
+       "       '40,100.00', '40,800.00', '50,000.00', '52,500.00', '52,600.00',\n",
+       "       '48,600.00', '50,800.00', '135,700.00', '136,600.00', '130,400.00',\n",
+       "       '37,800.00', '58,300.00', '52,700.00', '58,100.00', '58,700.00',\n",
+       "       '39,700.00', '126,700.00', '132,500.00', '135,400.00', '58,500.00',\n",
+       "       '55,700.00', '51,000.00', '56,200.00', '54,100.00', '50,200.00',\n",
+       "       '58,800.00', '39,100.00', '44,800.00', '44,700.00', '49,800.00',\n",
+       "       '41,200.00', '53,200.00', '49,600.00', '50,400.00', '55,800.00',\n",
+       "       '48,200.00', '49,000.00'], dtype=object)"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df['saving/year'].unique()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "id": "4acd1f60-5db0-4f50-9891-a8d27d2847b7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['saving/year'] = df['saving/year'].str.replace(',', '')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "id": "1e751ea0-ffc1-4f24-b45b-a6a2d7078236",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['saving/year'] = pd.to_numeric(df['saving/year'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "id": "782bfdc6-4391-461e-9d14-01b2a615493e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "age                      int64\n",
+       "gender                  object\n",
+       "education               object\n",
+       "status                  object\n",
+       "start_years              int64\n",
+       "year_experience          int64\n",
+       "crops                   object\n",
+       "farm_size_rai            int64\n",
+       "soil_quality            object\n",
+       "yield_(kg/rai)         float64\n",
+       "yield_(ton)            float64\n",
+       "mkt_price_(THB/ton)    float64\n",
+       "annual_income          float64\n",
+       "cost_ton               float64\n",
+       "annual_expense         float64\n",
+       "existing_loan          float64\n",
+       "loan_status             object\n",
+       "saving/year            float64\n",
+       "zip_code                 int64\n",
+       "dtype: object"
+      ]
+     },
+     "execution_count": 29,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.dtypes"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fc9efc43-443a-4e05-ba33-3611caedc862",
+   "metadata": {},
+   "source": [
+    "# Splitting data into X and y"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "id": "abf32654-eae9-4bd8-90a7-5bd35aac502d",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>education</th>\n",
+       "      <th>status</th>\n",
+       "      <th>start_years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>crops</th>\n",
+       "      <th>farm_size_rai</th>\n",
+       "      <th>soil_quality</th>\n",
+       "      <th>yield_(kg/rai)</th>\n",
+       "      <th>yield_(ton)</th>\n",
+       "      <th>mkt_price_(THB/ton)</th>\n",
+       "      <th>annual_income</th>\n",
+       "      <th>cost_ton</th>\n",
+       "      <th>annual_expense</th>\n",
+       "      <th>existing_loan</th>\n",
+       "      <th>saving/year</th>\n",
+       "      <th>zip_code</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>59</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>30</td>\n",
+       "      <td>N</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>332.07</td>\n",
+       "      <td>1165.82</td>\n",
+       "      <td>387129.68</td>\n",
+       "      <td>1122.0</td>\n",
+       "      <td>372578.53</td>\n",
+       "      <td>62500.0</td>\n",
+       "      <td>132700.0</td>\n",
+       "      <td>71260</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>34</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Never_Married</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>48</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>523.38</td>\n",
+       "      <td>1165.82</td>\n",
+       "      <td>610169.59</td>\n",
+       "      <td>1122.0</td>\n",
+       "      <td>587234.98</td>\n",
+       "      <td>180400.0</td>\n",
+       "      <td>127800.0</td>\n",
+       "      <td>71210</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>61</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Divorced</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>105</td>\n",
+       "      <td>N</td>\n",
+       "      <td>604.49</td>\n",
+       "      <td>63.77</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>682439.69</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>569685.99</td>\n",
+       "      <td>155700.0</td>\n",
+       "      <td>133700.0</td>\n",
+       "      <td>71110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>46</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>64</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>24.16</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>258573.28</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>215851.42</td>\n",
+       "      <td>81800.0</td>\n",
+       "      <td>56700.0</td>\n",
+       "      <td>46110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>65</td>\n",
+       "      <td>Male</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Separated</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>81</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>30.36</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>324876.85</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>271200.21</td>\n",
+       "      <td>108600.0</td>\n",
+       "      <td>54200.0</td>\n",
+       "      <td>46160</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   age gender         education         status  start_years  year_experience  \\\n",
+       "0   59   Male    Primary_School        Married           30               29   \n",
+       "1   34   Male  Secondary_School  Never_Married           24               10   \n",
+       "2   61   Male  Secondary_School       Divorced           23               38   \n",
+       "3   46   Male    Primary_School        Married           29               17   \n",
+       "4   65   Male  Secondary_School      Separated           21               44   \n",
+       "\n",
+       "        crops  farm_size_rai soil_quality  yield_(kg/rai)  yield_(ton)  \\\n",
+       "0  sugar_cane             30            N        10730.00       332.07   \n",
+       "1  sugar_cane             48           S3        10730.00       523.38   \n",
+       "2        rice            105            N          604.49        63.77   \n",
+       "3        rice             64           S3          372.54        24.16   \n",
+       "4        rice             81           S3          372.54        30.36   \n",
+       "\n",
+       "   mkt_price_(THB/ton)  annual_income  cost_ton  annual_expense  \\\n",
+       "0              1165.82      387129.68    1122.0       372578.53   \n",
+       "1              1165.82      610169.59    1122.0       587234.98   \n",
+       "2             10702.24      682439.69    8934.0       569685.99   \n",
+       "3             10702.24      258573.28    8934.0       215851.42   \n",
+       "4             10702.24      324876.85    8934.0       271200.21   \n",
+       "\n",
+       "   existing_loan  saving/year  zip_code  \n",
+       "0        62500.0     132700.0     71260  \n",
+       "1       180400.0     127800.0     71210  \n",
+       "2       155700.0     133700.0     71110  \n",
+       "3        81800.0      56700.0     46110  \n",
+       "4       108600.0      54200.0     46160  "
+      ]
+     },
+     "execution_count": 30,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X = df.drop('loan_status', axis = 1).copy()\n",
+    "X.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "id": "a7795ba4-038d-4216-9f93-8f6aea4dc507",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0     Fully_Paid\n",
+       "1    Charged_Off\n",
+       "2     Fully_Paid\n",
+       "3     Fully_Paid\n",
+       "4        Current\n",
+       "Name: loan_status, dtype: object"
+      ]
+     },
+     "execution_count": 31,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y = df['loan_status'].copy()\n",
+    "y.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d06ce48a-57e2-4bb2-bc06-a84c7468f9f9",
+   "metadata": {},
+   "source": [
+    "# Format Data (One-Hot Encoding)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bd9b19f8-eff9-45f6-a6c0-d71ce033926b",
+   "metadata": {},
+   "source": [
+    "## Convert all object to only int, float, and boolean"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "036295c1-7745-4407-93f1-f7f85d68727d",
+   "metadata": {},
+   "source": [
+    "#### Gender (from object to boolean) 1 for 'Male' and 0 for 'Female'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "id": "8cd21233-8a48-4d99-96c6-59272e70f7f4",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array(['Male', 'Female'], dtype=object)"
+      ]
+     },
+     "execution_count": 32,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X['gender'].unique()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "id": "8a46f6ba-ace8-49c8-b74a-70ba49dc6475",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X['gender'] = X['gender'].map({'Male': 1, 'Female': 0})"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "id": "beba6b4a-a196-4846-8858-5f6cb0fa0a76",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>education</th>\n",
+       "      <th>status</th>\n",
+       "      <th>start_years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>crops</th>\n",
+       "      <th>farm_size_rai</th>\n",
+       "      <th>soil_quality</th>\n",
+       "      <th>yield_(kg/rai)</th>\n",
+       "      <th>yield_(ton)</th>\n",
+       "      <th>mkt_price_(THB/ton)</th>\n",
+       "      <th>annual_income</th>\n",
+       "      <th>cost_ton</th>\n",
+       "      <th>annual_expense</th>\n",
+       "      <th>existing_loan</th>\n",
+       "      <th>saving/year</th>\n",
+       "      <th>zip_code</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>59</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>30</td>\n",
+       "      <td>N</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>332.07</td>\n",
+       "      <td>1165.82</td>\n",
+       "      <td>387129.68</td>\n",
+       "      <td>1122.0</td>\n",
+       "      <td>372578.53</td>\n",
+       "      <td>62500.0</td>\n",
+       "      <td>132700.0</td>\n",
+       "      <td>71260</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>34</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Never_Married</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>sugar_cane</td>\n",
+       "      <td>48</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>523.38</td>\n",
+       "      <td>1165.82</td>\n",
+       "      <td>610169.59</td>\n",
+       "      <td>1122.0</td>\n",
+       "      <td>587234.98</td>\n",
+       "      <td>180400.0</td>\n",
+       "      <td>127800.0</td>\n",
+       "      <td>71210</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>61</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Divorced</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>105</td>\n",
+       "      <td>N</td>\n",
+       "      <td>604.49</td>\n",
+       "      <td>63.77</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>682439.69</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>569685.99</td>\n",
+       "      <td>155700.0</td>\n",
+       "      <td>133700.0</td>\n",
+       "      <td>71110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>46</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Primary_School</td>\n",
+       "      <td>Married</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>64</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>24.16</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>258573.28</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>215851.42</td>\n",
+       "      <td>81800.0</td>\n",
+       "      <td>56700.0</td>\n",
+       "      <td>46110</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>65</td>\n",
+       "      <td>1</td>\n",
+       "      <td>Secondary_School</td>\n",
+       "      <td>Separated</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>rice</td>\n",
+       "      <td>81</td>\n",
+       "      <td>S3</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>30.36</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>324876.85</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>271200.21</td>\n",
+       "      <td>108600.0</td>\n",
+       "      <td>54200.0</td>\n",
+       "      <td>46160</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   age  gender         education         status  start_years  year_experience  \\\n",
+       "0   59       1    Primary_School        Married           30               29   \n",
+       "1   34       1  Secondary_School  Never_Married           24               10   \n",
+       "2   61       1  Secondary_School       Divorced           23               38   \n",
+       "3   46       1    Primary_School        Married           29               17   \n",
+       "4   65       1  Secondary_School      Separated           21               44   \n",
+       "\n",
+       "        crops  farm_size_rai soil_quality  yield_(kg/rai)  yield_(ton)  \\\n",
+       "0  sugar_cane             30            N        10730.00       332.07   \n",
+       "1  sugar_cane             48           S3        10730.00       523.38   \n",
+       "2        rice            105            N          604.49        63.77   \n",
+       "3        rice             64           S3          372.54        24.16   \n",
+       "4        rice             81           S3          372.54        30.36   \n",
+       "\n",
+       "   mkt_price_(THB/ton)  annual_income  cost_ton  annual_expense  \\\n",
+       "0              1165.82      387129.68    1122.0       372578.53   \n",
+       "1              1165.82      610169.59    1122.0       587234.98   \n",
+       "2             10702.24      682439.69    8934.0       569685.99   \n",
+       "3             10702.24      258573.28    8934.0       215851.42   \n",
+       "4             10702.24      324876.85    8934.0       271200.21   \n",
+       "\n",
+       "   existing_loan  saving/year  zip_code  \n",
+       "0        62500.0     132700.0     71260  \n",
+       "1       180400.0     127800.0     71210  \n",
+       "2       155700.0     133700.0     71110  \n",
+       "3        81800.0      56700.0     46110  \n",
+       "4       108600.0      54200.0     46160  "
+      ]
+     },
+     "execution_count": 34,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X.head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "737631fc-8ca4-48e3-a54e-29a52a9695ac",
+   "metadata": {},
+   "source": [
+    "### Education (from object to dummies)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "id": "b38fd2d3-5031-4000-8f1b-33c00e01eb28",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "age                      int64\n",
+       "gender                   int64\n",
+       "education               object\n",
+       "status                  object\n",
+       "start_years              int64\n",
+       "year_experience          int64\n",
+       "crops                   object\n",
+       "farm_size_rai            int64\n",
+       "soil_quality            object\n",
+       "yield_(kg/rai)         float64\n",
+       "yield_(ton)            float64\n",
+       "mkt_price_(THB/ton)    float64\n",
+       "annual_income          float64\n",
+       "cost_ton               float64\n",
+       "annual_expense         float64\n",
+       "existing_loan          float64\n",
+       "saving/year            float64\n",
+       "zip_code                 int64\n",
+       "dtype: object"
+      ]
+     },
+     "execution_count": 35,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X.dtypes"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "id": "5955cf90-9de8-459c-b954-f8f4dfa15606",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_Encoded = pd.get_dummies(X, columns=['education',\n",
+    "                              'status',\n",
+    "                              'crops',\n",
+    "                              'soil_quality'], dtype = float)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "id": "c0a0a15a-5164-44e1-9fda-c719192d4f6f",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>age</th>\n",
+       "      <th>gender</th>\n",
+       "      <th>start_years</th>\n",
+       "      <th>year_experience</th>\n",
+       "      <th>farm_size_rai</th>\n",
+       "      <th>yield_(kg/rai)</th>\n",
+       "      <th>yield_(ton)</th>\n",
+       "      <th>mkt_price_(THB/ton)</th>\n",
+       "      <th>annual_income</th>\n",
+       "      <th>cost_ton</th>\n",
+       "      <th>...</th>\n",
+       "      <th>crops_cassava</th>\n",
+       "      <th>crops_coffee</th>\n",
+       "      <th>crops_corn</th>\n",
+       "      <th>crops_pineaple</th>\n",
+       "      <th>crops_rice</th>\n",
+       "      <th>crops_sugar_cane</th>\n",
+       "      <th>soil_quality_N</th>\n",
+       "      <th>soil_quality_S1</th>\n",
+       "      <th>soil_quality_S2</th>\n",
+       "      <th>soil_quality_S3</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>59</td>\n",
+       "      <td>1</td>\n",
+       "      <td>30</td>\n",
+       "      <td>29</td>\n",
+       "      <td>30</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>332.07</td>\n",
+       "      <td>1165.82</td>\n",
+       "      <td>387129.68</td>\n",
+       "      <td>1122.0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>34</td>\n",
+       "      <td>1</td>\n",
+       "      <td>24</td>\n",
+       "      <td>10</td>\n",
+       "      <td>48</td>\n",
+       "      <td>10730.00</td>\n",
+       "      <td>523.38</td>\n",
+       "      <td>1165.82</td>\n",
+       "      <td>610169.59</td>\n",
+       "      <td>1122.0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>61</td>\n",
+       "      <td>1</td>\n",
+       "      <td>23</td>\n",
+       "      <td>38</td>\n",
+       "      <td>105</td>\n",
+       "      <td>604.49</td>\n",
+       "      <td>63.77</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>682439.69</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>46</td>\n",
+       "      <td>1</td>\n",
+       "      <td>29</td>\n",
+       "      <td>17</td>\n",
+       "      <td>64</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>24.16</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>258573.28</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>65</td>\n",
+       "      <td>1</td>\n",
+       "      <td>21</td>\n",
+       "      <td>44</td>\n",
+       "      <td>81</td>\n",
+       "      <td>372.54</td>\n",
+       "      <td>30.36</td>\n",
+       "      <td>10702.24</td>\n",
+       "      <td>324876.85</td>\n",
+       "      <td>8934.0</td>\n",
+       "      <td>...</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>0.0</td>\n",
+       "      <td>1.0</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>5 rows × 32 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   age  gender  start_years  year_experience  farm_size_rai  yield_(kg/rai)  \\\n",
+       "0   59       1           30               29             30        10730.00   \n",
+       "1   34       1           24               10             48        10730.00   \n",
+       "2   61       1           23               38            105          604.49   \n",
+       "3   46       1           29               17             64          372.54   \n",
+       "4   65       1           21               44             81          372.54   \n",
+       "\n",
+       "   yield_(ton)  mkt_price_(THB/ton)  annual_income  cost_ton  ...  \\\n",
+       "0       332.07              1165.82      387129.68    1122.0  ...   \n",
+       "1       523.38              1165.82      610169.59    1122.0  ...   \n",
+       "2        63.77             10702.24      682439.69    8934.0  ...   \n",
+       "3        24.16             10702.24      258573.28    8934.0  ...   \n",
+       "4        30.36             10702.24      324876.85    8934.0  ...   \n",
+       "\n",
+       "   crops_cassava  crops_coffee  crops_corn  crops_pineaple  crops_rice  \\\n",
+       "0            0.0           0.0         0.0             0.0         0.0   \n",
+       "1            0.0           0.0         0.0             0.0         0.0   \n",
+       "2            0.0           0.0         0.0             0.0         1.0   \n",
+       "3            0.0           0.0         0.0             0.0         1.0   \n",
+       "4            0.0           0.0         0.0             0.0         1.0   \n",
+       "\n",
+       "   crops_sugar_cane  soil_quality_N  soil_quality_S1  soil_quality_S2  \\\n",
+       "0               1.0             1.0              0.0              0.0   \n",
+       "1               1.0             0.0              0.0              0.0   \n",
+       "2               0.0             1.0              0.0              0.0   \n",
+       "3               0.0             0.0              0.0              0.0   \n",
+       "4               0.0             0.0              0.0              0.0   \n",
+       "\n",
+       "   soil_quality_S3  \n",
+       "0              0.0  \n",
+       "1              1.0  \n",
+       "2              0.0  \n",
+       "3              1.0  \n",
+       "4              1.0  \n",
+       "\n",
+       "[5 rows x 32 columns]"
+      ]
+     },
+     "execution_count": 37,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X_Encoded.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1820159f-ed5b-4184-9a96-89ee67e842fd",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "id": "61090165-7869-4b19-a8ec-c4986d28808f",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0      Fully_Paid\n",
+       "1     Charged_Off\n",
+       "2      Fully_Paid\n",
+       "3      Fully_Paid\n",
+       "4         Current\n",
+       "         ...     \n",
+       "95     Fully_Paid\n",
+       "96     Fully_Paid\n",
+       "97     Fully_Paid\n",
+       "98     Fully_Paid\n",
+       "99     Fully_Paid\n",
+       "Name: loan_status, Length: 100, dtype: object"
+      ]
+     },
+     "execution_count": 38,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "id": "d8e8b2f6-461e-43c8-9864-cc23e4d914d2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_cleaned = y.map({\n",
+    "    'Fully_Paid': 1,\n",
+    "    'Current': 1,\n",
+    "    'Charged_Off': 0,\n",
+    "    'In_Grace_Period': 0\n",
+    "})"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "id": "914308e1-87a3-4aba-b357-69a6529844d0",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0     1\n",
+      "1     0\n",
+      "2     1\n",
+      "3     1\n",
+      "4     1\n",
+      "     ..\n",
+      "95    1\n",
+      "96    1\n",
+      "97    1\n",
+      "98    1\n",
+      "99    1\n",
+      "Name: loan_status, Length: 100, dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(y_cleaned)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "id": "24550116-30d6-499e-9991-f1a12a53d00d",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([1, 0], dtype=int64)"
+      ]
+     },
+     "execution_count": 41,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_cleaned.unique()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6e1e209d-2267-494f-b469-ea13cbd720bf",
+   "metadata": {},
+   "source": [
+    "### Preliminary XGBoost Model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "id": "0182e967-c761-4bdc-8348-12184bdb92bb",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.84"
+      ]
+     },
+     "execution_count": 42,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# Prob of Not Default\n",
+    "sum(y_cleaned)/len(y_cleaned)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 43,
+   "id": "1acf116d-98fb-4cf8-8602-07900c724cc2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "X_train, X_test, y_train, y_test = train_test_split(X_Encoded, y_cleaned, random_state = 42, stratify = y_cleaned)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "id": "eca87ef8-c096-49d8-a6a7-29525c4f281e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.84"
+      ]
+     },
+     "execution_count": 44,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sum(y_train)/len(y_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "id": "1b077691-64a0-49fd-80e6-bbff43af8722",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.84"
+      ]
+     },
+     "execution_count": 45,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sum(y_test)/len(y_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "1119c264-d74c-4788-941a-9b762225fdd2",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "2bf5ebe7-16e4-4f81-9b27-4ec0e3a081b4",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "0f61adaf-8d76-441e-962e-650f8dcdbd0d",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "id": "002b617e-100d-49be-ac20-1da77c7b4dc2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "clf_xgb = xgb.XGBClassifier(\n",
+    "    objective='binary:logistic', \n",
+    "    seed=42, \n",
+    "    eval_metric='aucpr', \n",
+    "    early_stopping_rounds=10\n",
+    ")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "id": "30516d6e-3254-4c2d-ad84-795079ae9cee",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[0]\tvalidation_0-aucpr:0.90182\n",
+      "[1]\tvalidation_0-aucpr:0.90182\n",
+      "[2]\tvalidation_0-aucpr:0.88285\n",
+      "[3]\tvalidation_0-aucpr:0.88471\n",
+      "[4]\tvalidation_0-aucpr:0.93397\n",
+      "[5]\tvalidation_0-aucpr:0.92817\n",
+      "[6]\tvalidation_0-aucpr:0.94914\n",
+      "[7]\tvalidation_0-aucpr:0.94660\n",
+      "[8]\tvalidation_0-aucpr:0.94671\n",
+      "[9]\tvalidation_0-aucpr:0.94914\n",
+      "[10]\tvalidation_0-aucpr:0.94914\n",
+      "[11]\tvalidation_0-aucpr:0.95089\n",
+      "[12]\tvalidation_0-aucpr:0.94393\n",
+      "[13]\tvalidation_0-aucpr:0.94393\n",
+      "[14]\tvalidation_0-aucpr:0.93530\n",
+      "[15]\tvalidation_0-aucpr:0.93330\n",
+      "[16]\tvalidation_0-aucpr:0.93074\n",
+      "[17]\tvalidation_0-aucpr:0.93330\n",
+      "[18]\tvalidation_0-aucpr:0.93573\n",
+      "[19]\tvalidation_0-aucpr:0.93573\n",
+      "[20]\tvalidation_0-aucpr:0.93330\n",
+      "[21]\tvalidation_0-aucpr:0.93330\n"
+     ]
+    },
+    {
+     "data": {
+      "text/html": [
+       "<style>#sk-container-id-4 {color: black;}#sk-container-id-4 pre{padding: 0;}#sk-container-id-4 div.sk-toggleable {background-color: white;}#sk-container-id-4 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-4 label.sk-toggleable__label-arrow:before {content: \"▸\";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-4 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-4 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-4 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-4 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-4 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-4 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: \"▾\";}#sk-container-id-4 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-4 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-4 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-4 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-4 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-4 div.sk-parallel-item::after {content: \"\";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-4 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-4 div.sk-serial::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-4 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-4 div.sk-item {position: relative;z-index: 1;}#sk-container-id-4 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-4 div.sk-item::before, #sk-container-id-4 div.sk-parallel-item::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-4 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-4 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-4 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-4 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-4 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-4 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-4 div.sk-label-container {text-align: center;}#sk-container-id-4 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-4 div.sk-text-repr-fallback {display: none;}</style><div id=\"sk-container-id-4\" class=\"sk-top-container\"><div class=\"sk-text-repr-fallback\"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=10,\n",
+       "              enable_categorical=False, eval_metric=&#x27;aucpr&#x27;, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=None, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=None, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class=\"sk-container\" hidden><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-4\" type=\"checkbox\" checked><label for=\"sk-estimator-id-4\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">XGBClassifier</label><div class=\"sk-toggleable__content\"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=10,\n",
+       "              enable_categorical=False, eval_metric=&#x27;aucpr&#x27;, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=None, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=None, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)</pre></div></div></div></div></div>"
+      ],
+      "text/plain": [
+       "XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=10,\n",
+       "              enable_categorical=False, eval_metric='aucpr', feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=None, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=None, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)"
+      ]
+     },
+     "execution_count": 51,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "clf_xgb.fit(\n",
+    "    X_train, \n",
+    "    y_train, \n",
+    "    eval_set=[(X_test, y_test)], \n",
+    "    verbose=True\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "id": "54a22316-77b8-47aa-8b2d-262c72496906",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred_proba = clf_xgb.predict_proba(X_test)[:, 1]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 58,
+   "id": "8778d554-ca02-4bd9-934c-8d822022e611",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "y_pred = clf_xgb.predict(X_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "id": "225f45f0-fa17-4a54-bfd6-dd8855b2c090",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "ROC-AUC: 0.7738095238095237\n"
+     ]
+    }
+   ],
+   "source": [
+    "roc_auc = roc_auc_score(y_test, y_pred_proba)\n",
+    "print(f'ROC-AUC: {roc_auc}')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "id": "1c182d47-4b7a-4912-ac87-1b76782e74a9",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cm = confusion_matrix(y_test, y_pred)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 61,
+   "id": "5f6403ff-5925-43d1-8944-ebda1a44227b",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<sklearn.metrics._plot.confusion_matrix.ConfusionMatrixDisplay at 0x23886652790>"
+      ]
+     },
+     "execution_count": 61,
+     "metadata": {},
+     "output_type": "execute_result"
+    },
+    {
+     "data": {
+      "image/png": "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X5s3b3Y4tnjxYl1//fVKS0tT06ZNSxzXMAwFBwc7F8xlqBABAACXZGVlOWw5OTluGffMmTMyDEP16tUrtV12drbCw8PVpEkTDR8+XPv27XP6WiREAABY1KW7zFzZJCksLEz+/v72LS4uzuXYLly4oL/97W+688475efnV2K7tm3bKiEhQRs2bNDbb78tLy8v9erVS0eOHHHqekyZAQBgUeavmyv9JSk9Pd0hafH09HQlLOXl5emOO+6QzWbTiy++WGrbyMhIRUZG2vd79eqlLl26aPHixVq0aFGZr0lCBAAAXOLn51dqFccZeXl5uv3225WSkqJPP/3U6XE9PDzUvXt3pytETJkBAGBR7poyc5dLydCRI0e0ZcsWNWjQoByfydT+/fsVEhLiVD8qRAAAWJW75szKKDs7W9988419PyUlRfv371dAQIBCQ0P1hz/8QXv37tX777+vgoICZWZmSpICAgJUu3ZtSdKYMWPUuHFj+zqlOXPmKDIyUq1atVJWVpYWLVqk/fv364UXXnAqNhIiAACsytUqj5N99+zZo379+tn3p0yZIkkaO3asYmNjtWHDBklSp06dHPpt3bpVffv2lSSlpaXJw6Nwguv06dOaMGGCMjMz5e/vr86dO2v79u26/vrrnYqNhAgAAFSKvn37yizl4UWlnbskMTHRYf+5557Tc88952poJEQAAFhVeZ42fXn/6oKECAAAi+Jt94W4ywwAAFgeFSIAAKzKNJxeGF2kfzVBQgQAgEWxhqgQU2YAAMDyqBABAGBVlfxgxqtZmRIiZ16O9tBDD5U7GAAAUHm4y6xQmRKisj7wyDAMEiIAAPC7U6aEKCUlpaLjAAAAVaEaTXu5otyLqnNzc3X48GHl5+e7Mx4AAFBJrra33VclpxOi8+fPa/z48apTp47at2+vtLQ0SRfXDs2bN8/tAQIAgApiumGrJpxOiGbMmKEDBw4oMTFRXl5e9uMDBw7UqlWr3BocAABAZXD6tvt169Zp1apVioyMlGEUlsratWunb7/91q3BAQCAimT8urnSv3pwOiE6efKkAgMDixw/d+6cQ4IEAACucjyHyM7pKbPu3bvrgw8+sO9fSoL++c9/Kioqyn2RAQAAVBKnK0RxcXG66aabdOjQIeXn5+v555/XV199pV27dmnbtm0VESMAAKgIVIjsnK4Q9ezZU//+9791/vx5tWjRQps2bVJQUJB27dqlrl27VkSMAACgIlx6270rWzVRrneZdejQQStXrnR3LAAAAFWiXAlRQUGB1q5dq+TkZBmGoWuuuUbR0dGqWZN3xQIA8Hthmhc3V/pXF05nMP/9738VHR2tzMxMtWnTRpL09ddfq1GjRtqwYYM6dOjg9iABAEAFYA2RndNriO655x61b99e33//vfbu3au9e/cqPT1d1113nSZMmFARMQIAAFQopytEBw4c0J49e1S/fn37sfr16+vpp59W9+7d3RocAACoQK4ujK5Gi6qdrhC1adNGP/zwQ5HjJ06cUMuWLd0SFAAAqHiG6fpWXZSpQpSVlWX/77lz5+qhhx5SbGysIiMjJUm7d+/WE088ofnz51dMlAAAwP1YQ2RXpoSoXr16Dq/lME1Tt99+u/2Y+esy8xEjRqigoKACwgQAAKg4ZUqItm7dWtFxAACAysYaIrsyJUR9+vSp6DgAAEBlY8rMrtxPUjx//rzS0tKUm5vrcPy6665zOSgAAIDK5HRCdPLkSd1999368MMPiz3PGiIAAH4nqBDZOX3b/cMPP6yff/5Zu3fvlre3tz766COtXLlSrVq10oYNGyoiRgAAUBFMN2zVhNMVok8//VTr169X9+7d5eHhofDwcA0aNEh+fn6Ki4vTzTffXBFxAgAAVBinK0Tnzp1TYGCgJCkgIEAnT56UJHXo0EF79+51b3QAAKDiXLrLzJWtmijXk6oPHz4sSerUqZOWLVumY8eOaenSpQoJCXF7gAAAoGLwpOpCTk+ZPfzww8rIyJAkzZ49W0OGDNGbb76p2rVrKyEhwd3xAQAAVDinK0SjR49WTEyMJKlz585KTU3VF198ofT0dI0aNcrd8QEAgIpSyYuqt2/frhEjRig0NFSGYWjdunWO4ZimYmNjFRoaKm9vb/Xt21dfffXVFcddvXq12rVrJ09PT7Vr105r1651LjCVIyG6XJ06ddSlSxc1bNjQ1aEAAEA1du7cOXXs2FFLliwp9vw//vEPLVy4UEuWLNEXX3yh4OBgDRo0SGfPni1xzF27dmnUqFG66667dODAAd111126/fbb9fnnnzsVW5mmzKZMmVLmARcuXOhUAAAAoGoYcm0dkLNLqocOHaqhQ4cWe840TcXHx2vmzJm69dZbJUkrV65UUFCQ3nrrLf3lL38ptl98fLwGDRqkGTNmSJJmzJihbdu2KT4+Xm+//XaZYytTQrRv374yDfbbF8ACAABryMrKctj39PSUp6enU2OkpKQoMzNTgwcPdhinT58++uyzz0pMiHbt2qXJkyc7HBsyZIji4+Oduj4vd62matSvpxpG7aoOA6gQH7/xalWHAFSYrLM21W9dSRdz08tdw8LCHA7Pnj1bsbGxTg2VmZkpSQoKCnI4HhQUpKNHj5bar7g+l8Yrq3K/ywwAAPzOuenVHenp6fLz87MfdrY69FuXzzaZpnnFGajy9LkcCREAAHCJn5+fQ0JUHsHBwZIuVnx++1zDEydOFKkAXd7v8mrQlfoUx+W7zAAAwO/UVfQus2bNmik4OFibN2+2H8vNzdW2bdvUs2fPEvtFRUU59JGkTZs2ldqnOFSIAACwKFefNu1s3+zsbH3zzTf2/ZSUFO3fv18BAQFq2rSpHn74Yc2dO1etWrVSq1atNHfuXNWpU0d33nmnvc+YMWPUuHFjxcXFSZImTZqk3r17a/78+YqOjtb69eu1ZcsW7dy506nYSIgAAECl2LNnj/r162ffv/RYn7FjxyohIUHTpk3TL7/8ovvuu08///yzevTooU2bNsnX19feJy0tTR4ehRNcPXv21DvvvKPHH39cs2bNUosWLbRq1Sr16NHDqdgM0zSdzg1ff/11LV26VCkpKdq1a5fCw8MVHx+vZs2aKTo62tnh4EZZWVny9/fXgPpjVZO7zFBNbfyKO19RfV28y+w7nTlzxuV1OSVe49fvioinnpaHl1e5x7FduKDUx2dWaKyVxek1RC+99JKmTJmiYcOG6fTp0yooKJAk1atXz+l7/gEAQBW6itYQVTWnE6LFixfrn//8p2bOnKkaNWrYj3fr1k0HDx50a3AAAACVwek1RCkpKercuXOR456enjp37pxbggIAABWvshdVX82crhA1a9ZM+/fvL3L8ww8/VLt27dwREwAAqAyXnlTtylZNOF0hevTRR3X//ffrwoULMk1T//nPf/T2228rLi5Or7zySkXECAAAKoKbnlRdHTidEN19993Kz8/XtGnTdP78ed15551q3Lixnn/+ed1xxx0VESMAAECFKtdziO69917de++9OnXqlGw2mwIDA90dFwAAqGCsISrk0oMZGzZs6K44AABAZWPKzM7phKhZs2alvkH2u+++cykgAACAyuZ0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",
+      "text/plain": [
+       "<Figure size 640x480 with 2 Axes>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[\"Default\", \"Not default\"])\n",
+    "disp.plot(values_format='d')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "id": "a4ee157b-4fdf-44e0-8d78-58405c80515f",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([0.969271  , 0.9562276 , 0.907357  , 0.85698354, 0.9772942 ,\n",
+       "       0.87996364, 0.63242376, 0.9705685 , 0.932725  , 0.9846615 ,\n",
+       "       0.9716456 , 0.9846615 , 0.9742511 , 0.894379  , 0.9797925 ,\n",
+       "       0.74708664, 0.9853071 , 0.6937652 , 0.40361032, 0.95885706,\n",
+       "       0.97913194, 0.9674219 , 0.93110985, 0.834386  , 0.7367187 ],\n",
+       "      dtype=float32)"
+      ]
+     },
+     "execution_count": 65,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_pred_proba"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "fad989a7-745c-489c-87be-31f67face576",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "f4522ecc-ea1e-40cb-8a35-4d48e45a891e",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "cde81954-461a-48f6-89cb-5d7dbc4bbda1",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
